@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test'
 import { createFormatter, type FormatterDef } from '../src'
 
 const commonFormatters = {
+	// biome-ignore lint/suspicious/noExplicitAny: for all types
 	isType: (value): value is any => value !== null && value !== undefined,
 	formatters: {
 		/**
@@ -16,6 +17,7 @@ const commonFormatters = {
 			return JSON.stringify(value, null, options?.pretty ? 2 : 0)
 		},
 	},
+	// biome-ignore lint/suspicious/noExplicitAny: for all types
 } satisfies FormatterDef<any>
 
 const dateFormatter = {
@@ -35,7 +37,7 @@ const dateFormatter = {
 		 * @example
 		 * f(new Date(2023, 9, 1)).utc() == 'Sun, 01 Oct 2023 12:00:00 GMT' // true
 		 */
-		utc(value, options?: { timeZone?: string }) {
+		utc(value) {
 			return value.toUTCString()
 		},
 
@@ -55,7 +57,8 @@ const dateFormatter = {
 } satisfies FormatterDef<Date>
 
 const numberFormatter = {
-	isType: (value): value is number => typeof value === 'number',
+	isType: (value): value is number =>
+		typeof value === 'number' && !Number.isNaN(value),
 	formatters: {
 		/**
 		 * Formats the number as a string with two decimal places.
@@ -71,7 +74,7 @@ const numberFormatter = {
 		 * @example
 		 * f(123.456).currency() // '$123.46'
 		 */
-		currency(value, currency = 'USD') {
+		currency(value, currency: string = 'USD') {
 			return new Intl.NumberFormat('default', {
 				style: 'currency',
 				currency,
@@ -109,6 +112,8 @@ describe('createFormatter', () => {
 		expect(f(num).decimal()).toBe('123.46')
 		expect(f(num).currency()).toBe('$123.46')
 		expect(f(num).ms()).toBe('0 ms')
+		expect(f(num).json()).toBe('123.456')
+		f(num).json()
 	})
 
 	test('should format objects as JSON', () => {

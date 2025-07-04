@@ -1,3 +1,4 @@
+/** biome-ignore-all lint/suspicious/noExplicitAny: library */
 import type { GetTypeGuardType, UnionToIntersection } from './types'
 
 export type FormatterDef<T> = {
@@ -16,7 +17,21 @@ export function createFormatter<T extends FormatterDef<any>[]>(formatters: T) {
 		>,
 	>(
 		value: U,
-	): U extends GetTypeGuardType<T[number]['isType']> ? W : never => {
+	): U extends GetTypeGuardType<T[number]['isType']>
+		? /**
+			 * W is f(U) => Record<string, (value: U, option?: any) => any>
+			 * Convert it to f(U) => Record<string, (option?: any) => any>
+			 */
+			W extends Record<string, (value: U, option?: any) => any>
+			? {
+					[K in keyof W]: (
+						...args: Parameters<W[K]> extends [value: U, ...args: infer A]
+							? A
+							: never
+					) => ReturnType<W[K]>
+				}
+			: never
+		: never => {
 		const output = formatters
 			.filter((f) => f.isType(value))
 			.map((f) => f.formatters)

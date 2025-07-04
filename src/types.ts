@@ -3,8 +3,10 @@
 export type GetTypeGuardType<T> = T extends (val: any) => val is infer R
 	? R
 	: never
-export type UnionToIntersection<U> = ((k: U) => void) extends (
-	k: infer I,
-) => void
+export type UnionToIntersection<U> = (
+	U extends any
+		? (k: U) => void
+		: never
+) extends (k: infer I) => void
 	? I
 	: never
