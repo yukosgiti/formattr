@@ -15,10 +15,13 @@ export type RemoveFirstParameter<W, U> = W extends Record<
   (value: U, option?: any) => any
 >
   ? {
-      [K in keyof W]: (
-        ...args: Parameters<W[K]> extends [value: U, ...args: infer A]
-          ? A
-          : never
+      [K in keyof W]: W[K] extends (
+        value: U,
+        ...args: infer A
       ) => ReturnType<W[K]>
+        ? (...args: A) => ReturnType<W[K]>
+        : W[K] extends (value: U) => any
+          ? () => ReturnType<W[K]>
+          : never
     }
   : never

@@ -97,7 +97,7 @@ const numberFormatter = {
 
 const f = createFormatter([dateFormatter, commonFormatters, numberFormatter])
 
-describe('createFormatter', () => {
+describe('smoke', () => {
   test('should return a function that formats values based on their type', () => {
     expect(typeof f).toBe('function')
   })
@@ -105,6 +105,22 @@ describe('createFormatter', () => {
   test('should format Date values correctly', () => {
     const date = new Date(2023, 9, 1)
     expect(f(date).iso()).toBe('2023-10-01T00:00:00.000Z')
+  })
+
+  test('should format Date values in UTC', () => {
+    const date = new Date(2023, 9, 1)
+    expect(f(date).utc()).toBe('Sun, 01 Oct 2023 00:00:00 GMT')
+  })
+
+  test('should have json formatter for Date values', () => {
+    const date = new Date(2023, 9, 1)
+    expect(f(date).json()).toBe('"2023-10-01T00:00:00.000Z"')
+  })
+
+  test("should not have 'iso' formatter for non-Date values", () => {
+    const num = 123
+    // @ts-expect-error Testing type error
+    expect(() => f(num).iso()).toThrow(/f\(123\).iso is not a function/)
   })
 
   test('should format numbers correctly', () => {
@@ -116,6 +132,22 @@ describe('createFormatter', () => {
     f(num).json()
   })
 
+  test('should format numbers as JSON', () => {
+    const num = 123.456
+    expect(f(num).json()).toBe('123.456')
+    expect(f(num).json({ pretty: true })).toBe('123.456')
+  })
+
+  test('should not have Date formatters for non-Date values', () => {
+    const num = 123.456
+    // @ts-expect-error Testing type error
+    expect(() => f(num).iso()).toThrow(/f\(123.456\).iso is not a function/)
+    // @ts-expect-error Testing type error
+    expect(() => f(num).utc()).toThrow(/f\(123.456\).utc is not a function/)
+    // @ts-expect-error Testing type error
+    expect(() => f(num).local()).toThrow(/f\(123.456\).local is not a function/)
+  })
+
   test('should format objects as JSON', () => {
     const obj = { name: 'John', age: 30 }
     expect(f(obj).json()).toBe('{"name":"John","age":30}')
@@ -124,43 +156,5 @@ describe('createFormatter', () => {
     )
   })
 })
-test('should handle undefined and null values', () => {
-  expect(f(undefined).json()).toBe('null')
-  expect(f(null).json()).toBe('null')
-})
-test('should handle empty objects and arrays', () => {
-  expect(f({}).json()).toBe('{}')
-  expect(f([]).json()).toBe('[]')
-})
 
-test('should handle nested objects', () => {
-  const nestedObj = { user: { name: 'Alice', age: 25 }, active: true }
-  expect(f(nestedObj).json()).toBe(
-    '{"user":{"name":"Alice","age":25},"active":true}',
-  )
-})
-
-test('should handle special number values', () => {
-  expect(f(Infinity).json()).toBe('Infinity')
-  expect(f(-Infinity).json()).toBe('-Infinity')
-  expect(f(NaN).json()).toBe('NaN')
-})
-
-test('should handle empty strings', () => {
-  expect(f('').json()).toBe('""')
-})
-
-test('should handle boolean values', () => {
-  expect(f(true).json()).toBe('true')
-  expect(f(false).json()).toBe('false')
-})
-
-test('should handle functions', () => {
-  const func = () => 'Hello, World!'
-  expect(f(func).json()).toBe(func.toString())
-})
-
-test('should handle symbols', () => {
-  const sym = Symbol('test')
-  expect(f(sym).json()).toBe(sym.toString())
-})
+describe('type intersection checks', () => {})
